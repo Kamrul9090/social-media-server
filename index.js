@@ -2,7 +2,7 @@ const express = require('express');
 const app = express();
 const cors = require('cors');
 require('dotenv').config()
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const port = process.env.PORT || 5000;
 
 app.use(cors())
@@ -29,6 +29,27 @@ async function run() {
             const result = await postComments.find(query).toArray();
             res.send(result)
         })
+        app.get('/post/:id', async (req, res) => {
+            const id = req.params.id;
+            const postId = { _id: ObjectId(id) }
+            const postData = await postsData.findOne(postId);
+            res.send(postData);
+        })
+        app.post('/post/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = req.query.react;
+            console.log(query);
+            const filter = { _id: ObjectId(id) }
+            const options = { upsert: true };
+            const updateDoc = {
+                $set: {
+                    react: query
+                }
+            }
+            const data = await postsData.updateOne(filter, updateDoc, options)
+
+            res.send(data);
+        })
         app.post('/post', async (req, res) => {
             const query = req.body;
             const data = await postsData.insertOne(query)
@@ -36,7 +57,6 @@ async function run() {
         })
         app.post('/comments', async (req, res) => {
             const query = req.body;
-            console.log(query);
             const result = await postComments.insertOne(query);
             res.send(result)
         })
