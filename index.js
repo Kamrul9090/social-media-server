@@ -25,20 +25,50 @@ async function run() {
             res.send(result);
         })
         app.get('/comments', async (req, res) => {
-            const query = {};
+            const filter = {}
+            const result = await postComments.find(filter).toArray();
+            res.send(result)
+        })
+        app.get('/comments/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: ObjectId(id) }
             const result = await postComments.find(query).toArray();
             res.send(result)
         })
+        app.post('/comments', async (req, res) => {
+            const query = req.body;
+            const result = await postComments.insertOne(query);
+            res.send(result)
+        })
+
         app.get('/post/:id', async (req, res) => {
             const id = req.params.id;
             const postId = { _id: ObjectId(id) }
             const postData = await postsData.findOne(postId);
+            // console.log(postData);
             res.send(postData);
         })
         app.post('/post/:id', async (req, res) => {
             const id = req.params.id;
-            const query = req.query.react;
-            console.log(query);
+            const reactCount = Number(req.query.react);
+            const query = {}
+            console.log(reactCount);
+            const filter = { _id: ObjectId(id) }
+            const options = { upsert: true };
+            const updateDoc = {
+                $set: {
+                    react: reactCount
+                }
+            }
+            // const data = await postsData.updateOne(filter, updateDoc, options);
+            const data = await postsData.updateOne(filter, updateDoc, options);
+            console.log(data);
+            res.send(data);
+        })
+        // comment 
+        app.post('/comments/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = req.query.comment;
             const filter = { _id: ObjectId(id) }
             const options = { upsert: true };
             const updateDoc = {
@@ -46,8 +76,7 @@ async function run() {
                     react: query
                 }
             }
-            const data = await postsData.updateOne(filter, updateDoc, options)
-
+            const data = await postComments.updateOne(filter, updateDoc, options);
             res.send(data);
         })
         app.post('/post', async (req, res) => {
@@ -55,11 +84,7 @@ async function run() {
             const data = await postsData.insertOne(query)
             res.send(data)
         })
-        app.post('/comments', async (req, res) => {
-            const query = req.body;
-            const result = await postComments.insertOne(query);
-            res.send(result)
-        })
+
 
     }
     finally {
